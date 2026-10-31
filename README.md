@@ -65,7 +65,7 @@ Environment knobs: `DATAMATE_MODEL`, `DATAMATE_N_SAMPLES` (3), `DATAMATE_MAX_REP
 
 | Model | Parameters | Licence | Released | Role |
 |---|---|---|---|---|
-| _TODO_ | | | | SQL generation |
+| Qwen3-14B (`Qwen/Qwen3-14B`, bf16) | 14.8B (dense) | Apache 2.0 | 2025-04 | SQL generation |
 
 Total across all models must be ≤ 15B (count exact parameters, MoE total included).
 

@@ -48,7 +48,7 @@ class VLLMBackend:
 
         self.llm = VLLM(
             model=cfg.model_path,
-            dtype="auto",
+            dtype="bfloat16",
             max_model_len=cfg.max_model_len,
             gpu_memory_utilization=cfg.gpu_mem_util,
             enable_prefix_caching=True,  # the schema/rules prefix is shared across samples
