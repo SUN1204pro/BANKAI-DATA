@@ -1,0 +1,16 @@
+[project]
+name = "datamate"
+version = "0.1.0"
+description = "Vietnamese natural-language question answering over tabular data (Zalo AI Challenge 2026 - DataMate)"
+requires-python = ">=3.10"
+dependencies = ["pandas>=2.0", "openpyxl>=3.1"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.setuptools.package-data]
+"datamate.understand" = ["slang.json"]

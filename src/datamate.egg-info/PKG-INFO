@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: datamate
+Version: 0.1.0
+Summary: Vietnamese natural-language question answering over tabular data (Zalo AI Challenge 2026 - DataMate)
+Requires-Python: >=3.10
+Requires-Dist: pandas>=2.0
+Requires-Dist: openpyxl>=3.1
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"

@@ -1,0 +1,37 @@
+{
+  "_doc": "Reviewed by hand from train/questions.jsonl (python scripts/mine_slang.py). Keys are accent-free and lower-case, as produced by normalize.tokens(). 'plain' always expands; 'after_number' only when the word directly follows a number (5k, 2,5tr).",
+  "plain": {
+    "dthu": "doanh thu",
+    "dt": "doanh thu",
+    "ln": "lợi nhuận",
+    "sp": "sản phẩm",
+    "kh": "khách hàng",
+    "nv": "nhân viên",
+    "sl": "số lượng",
+    "dg": "đơn giá",
+    "tg": "thời gian",
+    "tt": "thanh toán",
+    "bill": "hóa đơn",
+    "total": "tổng",
+    "bn": "bao nhiêu",
+    "bnhiu": "bao nhiêu",
+    "nhiu": "nhiêu / nhiều",
+    "hnay": "hôm nay",
+    "hqua": "hôm qua",
+    "trc": "trước",
+    "th": "tháng",
+    "dc": "được",
+    "vs": "so với",
+    "ko": "không",
+    "hok": "không",
+    "k": "không",
+    "z": "vậy",
+    "j": "gì",
+    "tm": "tiền mặt",
+    "ck": "chuyển khoản"
+  },
+  "after_number": {
+    "k": {"expand": "nghìn", "mult": 1000},
+    "tr": {"expand": "triệu", "mult": 1000000}
+  }
+}

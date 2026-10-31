@@ -1,0 +1,126 @@
+{
+  "_doc": "Question types. 'cues' are regexes over the accent-free, lower-case question (norm()). 'rows' are regexes over the accent-free KEY of rulebook rows (the first cell of a table row, or the bold label of a bullet); the matching rows are repeated at the end of the prompt. The first rows of a measure are the ones that say which orders count. Order matters: measures (what is counted) come first, modifiers (ranking, ratio, compare) last, and each row is shown once, under the first topic that lists it. Macros: <HOWMANY> also covers the slang bn / bnhiu; <UNITS> is the list of counting units.",
+  "macros": {"<HOWMANY>": "(?:bao nhi\\w*|bnhiu|bn)", "<UNITS>": "thung|hop|chai|lon|goi|vi|cai|cay|bao|tan|xe|loc|ly|vien|kg|lit|dia|ket|cuon|tuyp|ong|mieng|bo|doi"},
+  "topics": {
+    "revenue": {
+      "label": "Doanh thu",
+      "cues": ["\\brevenue\\b", "\\bdoanh thu\\b", "\\bban (duoc|ra)\\b.*\\btien\\b", "\\bban\\b.*\\btien\\b", "\\bthu (ve|duoc)\\b", "\\btien (ban|hang)\\b", "\\btrung binh (mot )?don\\b|\\bgia tri (trung binh )?(mot )?don\\b"],
+      "rows": ["^don tinh vao doanh thu", "^ban duoc bao nhieu tien", "^don thuoc ky nao", "^doanh thu mot don", "^gia tri trung binh mot don"]
+    },
+    "cancel": {
+      "label": "Đơn huỷ",
+      "cues": ["\\bhuy\\b"],
+      "rows": ["^ti le don huy", "^don bi huy", "^trang thai don"]
+    },
+    "order_count": {
+      "label": "Số đơn",
+      "cues": ["\\bso don\\b", "\\b<HOWMANY> don\\b", "\\bmay don\\b", "\\bdem (so )?don\\b", "\\btong so don\\b", "\\bso (hoa don|bill|phieu)\\b"],
+      "rows": ["^so don$", "^don bi huy", "^don thuoc ky nao"]
+    },
+    "debt": {
+      "label": "Công nợ",
+      "cues": ["\\bno\\b", "\\bcong no\\b", "\\bcon thieu\\b", "\\bghi no\\b", "\\btra no\\b", "\\bthu no\\b", "\\btuoi no\\b", "\\bmua chiu\\b"],
+      "rows": ["^don duoc tinh vao no", "^no mot don", "^no theo khach", "^don cod", "^tuoi no", "^no them", "^xac dinh khach"]
+    },
+    "stock": {
+      "label": "Tồn kho",
+      "cues": ["\\bton (kho|cuoi|dau|luong)\\b", "\\bcon (lai|ton|hang|may|bao nhi\\w*)\\b", "\\bgia tri (hang|kho)\\b"],
+      "rows": ["^den het ngay", "^ton theo don vi lon", "^gia tri hang ton kho"]
+    },
+    "out_of_stock": {
+      "label": "Hết hàng",
+      "cues": ["\\bhet hang\\b"],
+      "rows": ["^mat hang het hang"]
+    },
+    "unsold": {
+      "label": "Hàng ế",
+      "cues": ["\\b(hang|mon|mat hang) e\\b", "\\bkhong ban duoc\\b|\\bban khong duoc\\b", "\\bbi e\\b", "\\be han\\b", "\\bkhong (ai|co ai) mua\\b", "\\bban ra khong\\b", "\\bkhong ban ra\\b"],
+      "rows": ["^mat hang khong ban duoc"]
+    },
+    "net_stock": {
+      "label": "Nhập trừ bán",
+      "cues": ["\\bnhap tru ban\\b", "\\bchenh (nhap|lech nhap)\\b"],
+      "rows": ["^nhap tru ban"]
+    },
+    "purchase": {
+      "label": "Nhập hàng",
+      "cues": ["\\bnhap hang\\b", "\\bgia nhap\\b", "\\bphieu nhap\\b", "\\bnha cung cap\\b", "\\bncc\\b", "\\bnhap (vao|them)\\b", "\\btien nhap\\b"],
+      "rows": ["^tien nhap hang", "^gia nhap binh quan"]
+    },
+    "profit": {
+      "label": "Giá vốn, lãi",
+      "cues": ["\\bloi nhuan\\b", "\\blai (gop|rong|nhat)\\b", "\\bloi nhat\\b", "\\bgia von\\b", "\\bchi phi\\b", "\\bhang loi\\b"],
+      "rows": ["^gia von", "^lai gop", "^lai rong", "^hang loi nhat"]
+    },
+    "price": {
+      "label": "Giá bán, đổi giá",
+      "cues": ["\\bgia ban\\b", "\\bdon gia\\b", "\\b(tang|doi|len) gia\\b"],
+      "rows": ["^gia ban x ngay", "^hieu ung tang gia"]
+    },
+    "sold_units": {
+      "label": "Số lượng bán theo đơn vị",
+      "cues": ["\\bban (duoc|ra)\\b.*\\b(<HOWMANY>|may) (<UNITS>)\\b", "\\btong so (<UNITS>)\\b", "\\bso (<UNITS>)\\b.*\\bban\\b"],
+      "rows": ["^ban duoc bao nhieu <"]
+    },
+    "units": {
+      "label": "Đơn vị tính",
+      "cues": ["\\b<HOWMANY> (<UNITS>)\\b", "\\bmay (<UNITS>)\\b", "\\bchan\\b", "\\bquy doi\\b"],
+      "rows": ["^don vi co ban", "^ton theo don vi lon"]
+    },
+    "payment": {
+      "label": "Hình thức thanh toán",
+      "cues": ["\\btien mat\\b", "\\bchuyen khoan\\b", "\\bcod\\b", "\\bmomo\\b", "\\bvi dien tu\\b", "\\bthanh toan bang\\b", "\\btra bang\\b", "\\bck\\b", "\\btm\\b"],
+      "rows": ["^doanh thu theo hinh thuc thanh toan"]
+    },
+    "customer_group": {
+      "label": "Nhóm khách",
+      "cues": ["\\bnhom khach\\b", "\\bkhach (than thiet|vip|si|le|nu|nam|vang lai)\\b", "\\bvang lai\\b"],
+      "rows": ["^doanh thu theo nhom khach", "^xac dinh khach"]
+    },
+    "customer": {
+      "label": "Khách",
+      "cues": ["\\bkhach (hang )?nao\\b", "\\b<HOWMANY> khach\\b", "\\bmay khach\\b", "\\bso khach\\b", "\\bai (la|mua|chi|nhieu)\\b", "\\bkhach .* nhat\\b"],
+      "rows": ["^xac dinh khach"]
+    },
+    "staff": {
+      "label": "Nhân viên",
+      "cues": ["\\bnhan vien\\b", "\\bnv\\b", "\\bthu ngan\\b"],
+      "rows": ["^nhan vien ban gioi nhat"]
+    },
+    "size": {
+      "label": "Size món (cà phê)",
+      "cues": ["\\bsize\\b", "\\(\\s*[ml]\\s*\\)"],
+      "rows": ["^size m"]
+    },
+    "pharma": {
+      "label": "Nhà thuốc",
+      "cues": ["\\bhoat chat\\b", "\\bke don\\b", "\\bhet han\\b", "\\bhan dung\\b", "\\bthuoc\\b"],
+      "rows": ["^thuoc ke don", "^hang het han", "^doanh thu theo hoat chat", "^lo gan het han"]
+    },
+    "delivery": {
+      "label": "Giao hàng nhiều đợt",
+      "cues": ["\\bdot giao\\b", "\\bso dot\\b", "\\bmay dot\\b", "\\bgiao (hang|nhieu)\\b"],
+      "rows": ["^giao nhieu dot"]
+    },
+    "share": {
+      "label": "Tỉ trọng của nhóm",
+      "cues": ["\\bchiem\\b", "\\bti trong\\b", "\\bphan (tram )?(cua|trong)\\b"],
+      "rows": ["^doanh thu theo nhom khach", "^nhom hang", "^mat hang$"]
+    },
+    "ranking": {
+      "label": "Xếp hạng",
+      "cues": ["\\btop\\b", "\\bxep hang\\b", "\\b(nhieu|it|cao|thap|lon|nho|gioi|chay|hot|loi|dat) nhat\\b", "\\bban chay\\b", "\\bbest seller\\b", "\\bhang dau\\b|\\bdung dau\\b"],
+      "rows": ["^ban chay", "^mat hang$", "^nhom hang", "^xac dinh khach", "^bang nhau", "^danh sach$", "^bang$"]
+    },
+    "ratio": {
+      "label": "Tỉ lệ, tỉ trọng",
+      "cues": ["\\bti le\\b", "\\bti trong\\b", "\\bchiem\\b", "%", "\\bphan tram\\b"],
+      "rows": ["^lam tron", "^so, phan tram"]
+    },
+    "compare": {
+      "label": "So với kỳ trước",
+      "cues": ["\\bso voi\\b", "\\bso sanh\\b", "\\bvs\\b", "\\bthay doi\\b", "\\btang truong\\b", "\\bcung ky\\b", "\\b(tang|giam)\\b", "\\bchenh lech\\b", "\\b(nhieu|it|cao|thap|lon|nho) hon\\b|\\bkem hon\\b|\\bhon kem\\b", "\\bthang (truoc|lien truoc)\\b"],
+      "rows": ["^phan tram thay doi", "^chenh lech", "^thang nay", "^tuan$"]
+    }
+  }
+}
