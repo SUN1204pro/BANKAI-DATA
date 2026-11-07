@@ -8,6 +8,12 @@ likely right than wrong (`DATAMATE_MIN_AGREE`, default 0.5, to be calibrated on 
 
 ## How it works
 
+**Hybrid run.** Stage 1 is the rule-based Zalo engine (`src/zalo_engine`, no model, CPU only; wired in by
+`src/datamate/zalo_stage.py`). It builds a cleaned SQLite database per business and answers what it understands.
+Its `accepted` answers and its `unanswerable` verdicts are final. Only the questions it abstained on (or did not reach
+within `DATAMATE_ZALO_BUDGET_S`) go to stage 2, the LLM pipeline below. If stage 1 answers everything, the model is never
+loaded. `DATAMATE_ZALO=0` turns stage 1 off.
+
 ```
 question + as_of_date + business folder
    1. ingest.py     clean tables -> in-memory SQLite, schema card (types, ranges, sample values),
@@ -65,7 +71,9 @@ Environment knobs: `DATAMATE_MODEL`, `DATAMATE_N_SAMPLES` (3), `DATAMATE_MAX_REP
 
 | Model | Parameters | Licence | Released | Role |
 |---|---|---|---|---|
-| Qwen3-14B (`Qwen/Qwen3-14B`, bf16) | 14.8B (dense) | Apache 2.0 | 2025-04 | SQL generation |
+| Qwen3-14B (`Qwen/Qwen3-14B`, bf16) | 14.8B (dense) | Apache 2.0 | 2025-04 | SQL generation, only for questions the rule-based engine abstains on |
+
+The rule-based stage (`src/zalo_engine`) uses 0 parameters and no weights.
 
 Total across all models must be ≤ 15B (count exact parameters, MoE total included).
 
@@ -83,11 +91,18 @@ Total across all models must be ≤ 15B (count exact parameters, MoE total inclu
 
 ## Status
 
-Verified by tests (107, no GPU): time resolver and Tết/holiday rules against the rulebook, number/date parsing, output
+Verified by tests (150, no GPU): time resolver and Tết/holiday rules against the rulebook, number/date parsing, output
 formats and rounding, +1/−1/0 scorer, answer/abstain decision, ingestion of CSV/Excel/SQLite, resume after a crash.
 
+**Hybrid stage 1 (Zalo engine).** On the 553-question dev split it answered 552 and abstained on 1 (score +550/553), but
+dev lies inside `train/`, which the engine was developed against, so this is NOT an estimate for unseen data. With a light
+paraphrase (a polite opener and closer added to every dev question) it abstained on 153/553 (28%) and its precision on the
+rest stayed 0.998. That abstained share is what the LLM has to cover; the LLM's accuracy on it is not measured yet.
+Provenance caveat: the Zalo code's own README says its authors read public-test samples while writing rules (Rule 6
+clarification pending). Decide whether to ship it before submitting.
+
 **Not yet verified**
-1. `llm.py` (vLLM backend) has never run on a GPU.
+1. `llm.py` (vLLM backend) has never run on a GPU, and the hybrid hand-off to Qwen has only run with a mock LLM.
 2. Ingestion has only been tried on synthetic files, not the 30 real businesses. Rulebook §8 rules still to implement once the
    real files are inspected: blank cells below an order's first line inherit its customer/status; two identical lines of
    the same order count once; dates without a year take the sheet's year.

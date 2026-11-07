@@ -29,6 +29,10 @@ class Config:
     sql_timeout_s: float = field(default_factory=lambda: _f("DATAMATE_SQL_TIMEOUT_S", 20.0))
     chunk_size: int = field(default_factory=lambda: _i("DATAMATE_CHUNK_SIZE", 64))
 
+    # Hybrid mode: the rule-based Zalo engine answers first, the LLM only sees what it abstained on.
+    zalo: bool = field(default_factory=lambda: os.environ.get("DATAMATE_ZALO", "1") != "0")
+    zalo_budget_s: float = field(default_factory=lambda: _f("DATAMATE_ZALO_BUDGET_S", 3600.0))
+
     # Time budget: the organizers allow 6h wall-clock including model loading.
     deadline_s: float = field(default_factory=lambda: _f("DATAMATE_DEADLINE_S", 5.25 * 3600))
     soft_fraction: float = field(default_factory=lambda: _f("DATAMATE_SOFT_FRACTION", 0.85))

@@ -12,7 +12,9 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import sys
+import tempfile
 import time
 import traceback
 from collections import OrderedDict
@@ -30,6 +32,7 @@ from datamate.llm import make_backend  # noqa: E402
 from datamate.lunar import CalendarFormatError, LunarCalendar  # noqa: E402
 from datamate.rules import RuleBook  # noqa: E402
 from datamate.timeparse import Conventions  # noqa: E402
+from datamate.zalo_stage import run_zalo  # noqa: E402
 
 log = logging.getLogger("datamate")
 
@@ -88,6 +91,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--rulebook")
     ap.add_argument("--calendar")
     ap.add_argument("--conventions", default=str(Path(__file__).parent / "conventions.json"))
+    ap.add_argument("--zalo-db-dir", help="where the Zalo engine keeps its per-business databases (default: a temp dir)")
     ap.add_argument("--shard", type=int, default=0)
     ap.add_argument("--num-shards", type=int, default=1)
     ap.add_argument("--finalize-only", action="store_true")
@@ -136,6 +140,37 @@ def main(argv: list[str] | None = None) -> int:
             log.warning("lunar calendar disabled (%s): %s", cal_path, e)
 
     index = BusinessIndex(root, Path(args.business_root) if args.business_root else None)
+
+    if cfg.zalo:
+        # Stage 1: the rule-based engine. Its answers (and its provable "unanswerable") are final;
+        # only the questions it abstained on, or did not reach, go to the LLM.
+        shard_db = Path(args.zalo_db_dir or tempfile.mkdtemp(prefix="datamate_zalo_")) / f"shard{args.shard}"
+        workers = max(1, (os.cpu_count() or 1) // max(1, args.num_shards))
+        try:
+            zres = run_zalo(todo, index.find, rulebook_path, cal_path, shard_db, workers, cfg.zalo_budget_s)
+        except Exception:  # noqa: BLE001
+            log.error("zalo stage failed, sending everything to the LLM:\n%s", traceback.format_exc())
+            zres = {}
+        rest: list[dict] = []
+        for q in todo:
+            r = zres.get(q["id"])
+            if r is not None and r.final:
+                writer.write(r.line)
+                if qa_log:
+                    qa_log.write({"id": q["id"], "source": "zalo", "status": r.status, "final": r.line,
+                                  "parsed_text": r.parsed_text, "diagnostics": r.diagnostics})
+            else:
+                if r is not None and qa_log:
+                    qa_log.write({"id": q["id"], "source": "zalo", "status": r.status, "to_llm": True,
+                                  "diagnostics": r.diagnostics})
+                rest.append(q)
+        writer.sync()
+        log.info("zalo kept %d, %d go to the LLM (elapsed %.0fs)", len(todo) - len(rest), len(rest), cfg.elapsed())
+        todo = rest
+        if not todo:  # nothing left for the model: do not even load it
+            writer.close()
+            return 0
+
     cache = BusinessCache(index)
     llm = make_backend(cfg)
     agent = Agent(llm, cfg, rules, cal, load_conventions(Path(args.conventions)))

@@ -104,6 +104,7 @@ def test_repair_loop_recovers_from_bad_sql(synth):
 
 def test_cli_with_null_backend_resume_and_finalize(synth, tmp_path, monkeypatch):
     monkeypatch.setenv("DATAMATE_BACKEND", "null")
+    monkeypatch.setenv("DATAMATE_ZALO", "0")  # this test is about the LLM-only path
     monkeypatch.setenv("DATAMATE_LOG_DIR", str(tmp_path / "logs"))
     out = tmp_path / "result" / "submission.jsonl"
     out.parent.mkdir()
@@ -135,3 +136,45 @@ def test_sharding_covers_every_question_once(synth, tmp_path, monkeypatch):
         run_module.main(["--data", str(synth / "data"), "--out", str(out), "--shard", str(shard), "--num-shards", "3"])
     ids = [r["id"] for r in read_jsonl(out)]
     assert sorted(ids) == sorted(q["id"] for q in read_jsonl(synth / "data" / "questions.jsonl"))
+
+
+def test_hybrid_zalo_first_then_llm_only_for_its_abstentions(synth, tmp_path, monkeypatch):
+    monkeypatch.setenv("DATAMATE_LOG_DIR", str(tmp_path / "logs"))
+    seen: list[str] = []
+
+    def fn(req: GenRequest) -> list[str]:
+        seen.append(_question_of(req))
+        return [json.dumps({"answerable": True, "answer_type": "number", "sql": "SELECT 42"})] * req.n
+
+    monkeypatch.setattr(run_module, "make_backend", lambda cfg: MockBackend(fn))
+    out = tmp_path / "submission.jsonl"
+    questions = read_jsonl(synth / "data" / "questions.jsonl")
+    assert run_module.main(["--data", str(synth / "data"), "--out", str(out)]) == 0
+
+    rows = {r["id"]: r for r in read_jsonl(out)}
+    assert set(rows) == {q["id"] for q in questions}
+    qa = {r["id"]: r for r in read_jsonl(tmp_path / "logs" / "qa_shard0.jsonl") if r.get("source") == "zalo"}
+    kept = {i for i, r in qa.items() if not r.get("to_llm")}
+    handed = {i for i, r in qa.items() if r.get("to_llm")}
+    assert kept and handed and kept.isdisjoint(handed)
+    texts = {q["id"]: q["question"] for q in questions}
+    assert set(seen) == {texts[i] for i in handed}                      # the model never saw a question Zalo kept
+    assert all(rows[i] == qa[i]["final"] for i in kept)                  # Zalo's answer is written unchanged
+    assert all(rows[i]["answer"] == 42 for i in handed)                  # the rest came from the LLM
+
+
+def test_hybrid_skips_model_when_zalo_answers_everything(synth, tmp_path, monkeypatch):
+    monkeypatch.setenv("DATAMATE_LOG_DIR", str(tmp_path / "logs"))
+    from datamate import zalo_stage
+
+    def fake_run_zalo(todo, *a, **k):
+        return {q["id"]: zalo_stage.ZaloResult({"id": q["id"], "type": "number", "answer": 1}, "accepted") for q in todo}
+
+    def boom(cfg):
+        raise AssertionError("model must not load")
+
+    monkeypatch.setattr(run_module, "run_zalo", fake_run_zalo)
+    monkeypatch.setattr(run_module, "make_backend", boom)
+    out = tmp_path / "submission.jsonl"
+    assert run_module.main(["--data", str(synth / "data"), "--out", str(out)]) == 0
+    assert all(r["answer"] == 1 for r in read_jsonl(out))
